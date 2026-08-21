@@ -199,7 +199,7 @@ void ul::sendHandleInfo(inetconn *c, const HANDLE *h, const char *mask)
 	else if(c->checkFlag(HAS_S))
 	{
 		userlist.flags2str(h->flags[MAX_CHANNELS], buf);
-		c->send("flags: \002", buf, "\002, ip:\002 ", inet2char(h->ip), "\002", !isNullString((char *) h->pass, 16) ? ", password is set" : "", (ul::isMain(h) || net.findConn(h)) ? ", linked" : ", \002not\002 linked", NULL);
+		c->send("flags: \002", buf, "\002, ip:\002 ", (*h->ip6 ? h->ip6 : inet2char(h->ip)), "\002", !isNullString((char *) h->pass, 16) ? ", password is set" : "", (ul::isMain(h) || net.findConn(h)) ? ", linked" : ", \002not\002 linked", NULL);
 	}
 	else
 	{
