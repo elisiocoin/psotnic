@@ -1,0 +1,26 @@
+# Binari ed eseguibili
+psotnic
+bin/
+*.o
+*.a
+*.so
+
+# File generati dal build/configure
+Makefile
+Makefile.dynamic
+config.h
+config.log
+config.status
+
+# File di configurazione locali e dati del bot
+*.conf
+*.db
+*.user
+*.chan
+*.pid
+logs/
+
+# Temporanei ed editor
+*~
+*.swp
+.DS_Store
