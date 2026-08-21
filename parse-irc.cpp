@@ -763,7 +763,12 @@ void parse_irc(char *data)
 			{
 				if(userlist.hasPartylineAccess(arg[0]))
 				{
-					snprintf(buf, MAX_LEN, ":\001DCC CHAT CHAT %d %d\001", inet_network(config.myipv4), (int) config.listenport);
+#ifdef HAVE_IPV6
+					if(!config.linkbind.isDefault() && config.linkbind.isIpv6())
+						snprintf(buf, MAX_LEN, ":\001DCC CHAT CHAT %s %d\001", (const char *) config.linkbind, (int) config.listenport);
+					else
+#endif
+						snprintf(buf, MAX_LEN, ":\001DCC CHAT CHAT %d %d\001", inet_network(config.myipv4), (int) config.listenport);
 					ctcp.push("PRIVMSG ", arg[0], " ", buf, NULL);
 				}
 				return;
