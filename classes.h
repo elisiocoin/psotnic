@@ -1097,7 +1097,7 @@ class ul
 	static bool isBot(const HANDLE *h);
 	bool isBot(const char *name);
 	bool isBot(unsigned int ip);
-	bool isBot(const char *ip6str);
+	bool isBotIp6(const char *ip6str);
 	static bool isMain(const HANDLE *h);
 	static bool isSlave(const HANDLE *h);
 	static bool isLeaf(const HANDLE *h);

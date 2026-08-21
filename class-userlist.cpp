@@ -1480,7 +1480,7 @@ bool ul::isBot(unsigned int ip)
 	return false;
 }
 
-bool ul::isBot(const char *ip6str)
+bool ul::isBotIp6(const char *ip6str)
 {
 	if(!ip6str || !*ip6str) return false;
 	HANDLE *h = first;

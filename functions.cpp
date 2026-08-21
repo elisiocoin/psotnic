@@ -888,7 +888,7 @@ int acceptConnection(int fd, bool ssl)
 			{
 				if(from_ip4) isKnownBot = userlist.isBot(from_ip4);
 #ifdef HAVE_IPV6
-				else if(*from_ip6) isKnownBot = userlist.isBot(from_ip6);
+				else if(*from_ip6) isKnownBot = userlist.isBotIp6(from_ip6);
 #endif
 			}
         	if(isKnownBot)
