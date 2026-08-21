@@ -1018,9 +1018,57 @@ int getport(int fd, int (*fun)(int s, struct sockaddr *name, socklen_t *namelen)
 
 int startListening(const char *ip, int port)
 {
-	struct sockaddr_in sin;
 	int s;
 	const int one = 1;
+
+#ifdef HAVE_IPV6
+	/* auto-detect the family from the bind address: an IPv6 literal makes
+	 * this an IPv6-only listen socket, anything else (empty string, "0.0.0.0"
+	 * or an IPv4 literal) keeps the historical IPv4 behaviour. */
+	if(ip && *ip && isValidIp(ip) == 6)
+	{
+		struct sockaddr_in6 sin6;
+
+		if((s = socket(AF_INET6, SOCK_STREAM, 0)) == -1)
+		{
+			killSocket(s);
+			return -1;
+		}
+
+		if(setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) != 0)
+		{
+			killSocket(s);
+			return -1;
+		}
+
+		/* keep this socket strictly IPv6: we want "either IPv4 or IPv6",
+		 * never an implicit dual-stack fallback to IPv4. */
+#ifdef IPV6_V6ONLY
+		setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &one, sizeof(one));
+#endif
+
+		memset(&sin6, 0, sizeof(sin6));
+		sin6.sin6_family = AF_INET6;
+		inet_pton(AF_INET6, ip, (void *) &sin6.sin6_addr);
+		sin6.sin6_port = htons(port);
+
+		if(bind(s, (struct sockaddr *) &sin6, sizeof(sin6)) == -1)
+		{
+			killSocket(s);
+			return -1;
+		}
+
+		if(listen(s, SOMAXCONN) == -1)
+		{
+			killSocket(s);
+			return -1;
+		}
+
+		return s;
+	}
+#endif
+
+	struct sockaddr_in sin;
 
 	if((s = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 	{

@@ -24,3 +24,8 @@ logs/
 *~
 *.swp
 .DS_Store
+
+#test make-hiddenseed
+make-hiddenseed
+tests/a.out
+tests/*.exe

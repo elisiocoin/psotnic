@@ -157,8 +157,13 @@ void CONFIG::load(const char *file, bool decrypted)
 
 	if(config.listenport)
 	{
-		printf("[*] Opening listening socket at %s:%d\n", (const char *) config.myipv4, (int) config.listenport);
-		if((net.listenfd = startListening(config.myipv4, config.listenport)) < 1)
+		/* if linkbind is set (either an IPv4 or an IPv6 literal) it takes
+		 * priority over the legacy myipv4 field, so the bot-link listen
+		 * socket can be opened on IPv6 alone. */
+		const char *bindAddr = !config.linkbind.isDefault() ? (const char *) config.linkbind : (const char *) config.myipv4;
+
+		printf("[*] Opening listening socket at %s:%d\n", bindAddr, (int) config.listenport);
+		if((net.listenfd = startListening(bindAddr, config.listenport)) < 1)
 		{
 			printf("[-] Cannot open socket (%s)\n", strerror(errno));
 			exit(1);
@@ -191,8 +196,10 @@ void CONFIG::load(const char *file, bool decrypted)
 			exit(1);
 		}
 		
-		printf("[*] Opening listening SSL socket at %s:%d\n", (const char *) config.myipv4, (int) config.ssl_listenport);
-		if((net.ssl_listenfd = startListening(config.myipv4, config.ssl_listenport)) < 1)
+		const char *sslBindAddr = !config.linkbind.isDefault() ? (const char *) config.linkbind : (const char *) config.myipv4;
+
+		printf("[*] Opening listening SSL socket at %s:%d\n", sslBindAddr, (int) config.ssl_listenport);
+		if((net.ssl_listenfd = startListening(sslBindAddr, config.ssl_listenport)) < 1)
 		{
 			printf("[-] Cannot open socket (%s)\n", strerror(errno));
 			exit(1);

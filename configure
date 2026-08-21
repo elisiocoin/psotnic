@@ -162,7 +162,8 @@ print $f "\t\@echo Available targets:\n";
 print $f "\t\@echo '* dynamic (prefered for most systems)'\n";
 print $f "\t\@echo '* static'\n";
 print $f "\t\@echo '* debug'\n";
-print $f "\t\@echo '* apidox'\n\n";
+print $f "\t\@echo '* apidox'\n";
+print $f "\t\@echo '* install (copies the compiled bot to \$(HOME)/psotnic)'\n\n";
 
 print $f "create_hidden_seed:\n";
 print $f "\t\@${cc_prefix}g++ -o make-hiddenseed make-hiddenseed.c && ./make-hiddenseed > hidden-seed-functions.c\n\n";
@@ -182,6 +183,26 @@ print $f "\t\@\$(MAKE) -f Makefile.static\n\n";
 print $f "apidox:\n";
 print $f "\t\@echo [*] Generating API documentation\n";
 print $f "\t\@doxygen Doxyfile > docs/doxygen.log 2>&1\n\n";
+
+print $f "INSTALL_DIR = \$(HOME)/psotnic\n\n";
+
+print $f "install:\n";
+print $f "\t\@if [ ! -f bin/psotnic ]; then \\\n";
+print $f "\t\techo \"[-] No compiled binary found in bin/psotnic\"; \\\n";
+print $f "\t\techo \"[-] Run 'make dynamic' (or static/debug) first\"; \\\n";
+print $f "\t\texit 1; \\\n";
+print $f "\tfi\n";
+print $f "\t\@echo [*] Installing psotnic to \$(INSTALL_DIR)\n";
+print $f "\t\@mkdir -p \$(INSTALL_DIR)\n";
+print $f "\t\@cp -f bin/psotnic \$(INSTALL_DIR)/\n";
+print $f "\t\@cp -rn cfg-examples \$(INSTALL_DIR)/ 2>/dev/null || true\n";
+print $f "\t\@if ls modules/*.so >/dev/null 2>&1; then \\\n";
+print $f "\t\tmkdir -p \$(INSTALL_DIR)/modules; \\\n";
+print $f "\t\tcp -f modules/*.so \$(INSTALL_DIR)/modules/; \\\n";
+print $f "\tfi\n";
+print $f "\t\@echo [+] Installed to \$(INSTALL_DIR)\n";
+print $f "\t\@echo \"[*] cd \$(INSTALL_DIR) \&\& ./psotnic -n conf.myhub   # to create a config\"\n\n";
+
 
 print $f "\nclean:\n";
 print $f "\t\@rm -f *.exe *.o core psotnic-* psotnic validator *.log vgcore.* tests/a.out tests/a.exe make-hiddenseed\n\n";

@@ -554,7 +554,23 @@ int client::connectToHUB()
 	DEBUG(printf("[*] Connecting to HUB: %s port %d\n",
 		  (const char *) config.currentHub->getHost().connectionString, (int) config.currentHub->getPort()));
 
-	fd = doConnect((const char *) config.currentHub->getHost().ip, config.currentHub->getPort(), config.myipv4, -1);
+	/* choose the bind/source address for this connection: linkbind wins if
+	 * it's set and matches the hub's address family, otherwise fall back to
+	 * myipv4 (IPv4 hub) or no explicit bind at all (IPv6 hub, ANY source). */
+#ifdef HAVE_IPV6
+	if(config.currentHub->getHost().isIpv6())
+	{
+		const char *bind6 = (!config.linkbind.isDefault() && config.linkbind.isIpv6())
+			? (const char *) config.linkbind : NULL;
+		fd = doConnect6(config.currentHub->getHost().ip, config.currentHub->getPort(), bind6, -1);
+	}
+	else
+#endif
+	{
+		const char *bind4 = (!config.linkbind.isDefault() && !config.linkbind.isIpv6())
+			? (const char *) config.linkbind : (const char *) config.myipv4;
+		fd = doConnect((const char *) config.currentHub->getHost().ip, config.currentHub->getPort(), bind4, -1);
+	}
 
 	if(fd > 0)
 	{

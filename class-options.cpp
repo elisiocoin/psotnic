@@ -374,7 +374,7 @@ CONFIG::CONFIG()
 			new entWord("pass", 1, 256)));
 
 	registerObject(hub = entHub("hub",
-			new entHost("host", entHost::ipv4 | entHost::domain | entHost::use_ssl),
+			new entHost("host", entHost::ipv4 | entHost::ipv6 | entHost::domain | entHost::use_ssl),
 			new entInt("port", 1, 65535, 0),
 			new entMD5Hash("pass"),
 			new entWord("handle", 0, 15)));
@@ -383,7 +383,7 @@ CONFIG::CONFIG()
 	for(i=0; i<MAX_ALTS; ++i)
 	{
 		registerObject(alt[i] = entHub("alt",
-					   new entHost("host", entHost::ipv4 | entHost::domain | entHost::use_ssl),
+					   new entHost("host", entHost::ipv4 | entHost::ipv6 | entHost::domain | entHost::use_ssl),
 					   new entInt("port", 1, 65535, 0)));
 		alt[i].setDontPrintIfDefault(true);
 		alt_storage.add(&alt[i]);
@@ -430,6 +430,12 @@ CONFIG::CONFIG()
 
 	registerObject(myipv4 = entHost("myipv4", entHost::ipv4 | entHost::bindCheck));
 	registerObject(vhost = entHost("vhost", entHost::ipv4 | entHost::ipv6 | entHost::bindCheck));
+	/* address used to bind the bot-link listen socket AND as source address
+	 * when a leaf connects out to its hub. Can be either an IPv4 or an IPv6
+	 * literal (never both at once) - whichever family is set here is the
+	 * family used for the link. Defaults to 0.0.0.0, which falls back to the
+	 * legacy behaviour (IPv4 / myipv4). */
+	registerObject(linkbind = entHost("linkbind", entHost::ipv4 | entHost::ipv6 | entHost::bindCheck));
 	registerObject(logfile = entWord("logfile", 1, 16));
 	registerObject(userlist_file = entWord("userlist", 1, 255));	// = nick
 	registerObject(dontfork = entBool("dontfork", 0));

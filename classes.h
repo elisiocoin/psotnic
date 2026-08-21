@@ -734,6 +734,7 @@ class CONFIG : public options
 	entString realname;
 	entHost myipv4;
 	entHost vhost;
+	entHost linkbind;
 	entWord userlist_file;
 	entString kickreason;
 	entString quitreason;

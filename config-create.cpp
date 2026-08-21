@@ -468,6 +468,7 @@ void createInitialConfig()
 	readUserInput( "Nick to use when the normal nick is already taken:", config.altnick );
 
 	readUserInput( "Enter the bots IPv4 address, use 0.0.0.0 for any", config.myipv4 );
+	readUserInput( "Address to bind bot-links to (leave 0.0.0.0 to reuse myipv4/IPv4, or enter an IPv6 address to link over IPv6 only)", config.linkbind );
 
 	const char *choices[3] = {
 		"Main",
