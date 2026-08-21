@@ -114,10 +114,18 @@ void parse_ctcp(char *mask, char *data, char *to)
 	/* dcc chat */
 	if(!strcmp(arg[0], "DCC") && !strcmp(arg[1], "CHAT") && strlen(arg[4]))
 	{
-		if(isValidIp(buf) == 6)
+		if(isValidIp(arg[3]) == 6)
 			strncpy(buf, arg[3], MAX_LEN-1);
 		else
+		{
 			sprintf(buf, "%s", inet2char(htonl(strtoul(arg[3], NULL, 10))));
+			/* IPv6 clients can't encode their address as 32-bit, so they send 0.0.0.0 */
+			if(!strcmp(buf, "0.0.0.0"))
+			{
+				const char *at = strchr(mask, '@');
+				if(at) strncpy(buf, at + 1, MAX_LEN - 1);
+			}
+		}
 
 		if(config.bottype == BOT_MAIN && userlist.hasPartylineAccess(mask))
 		{
