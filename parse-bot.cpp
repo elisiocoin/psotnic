@@ -89,7 +89,8 @@ void parse_bot(inetconn *c, char *data)
 			{
 				if(strlen(arg[1]))
 				{
-					struct sockaddr_in peer;
+					struct sockaddr_storage peer;
+					memset(&peer, 0, sizeof(peer));
 					HANDLE *h = userlist.findHandle(arg[0]);
 
 					if(h && net.findConn(h))
@@ -109,7 +110,7 @@ void parse_bot(inetconn *c, char *data)
 						break;
 					}
 
-					socklen_t peersize = sizeof(struct sockaddr_in);
+					socklen_t peersize = sizeof(peer);
 					getpeername(c->fd, (sockaddr *) &peer, &peersize);
 
 					if(!h)
@@ -127,26 +128,42 @@ void parse_bot(inetconn *c, char *data)
 
 						break;
 					}
-					if(!h->ip || peer.sin_addr.s_addr == h->ip)
 					{
-   						if(MD5HexValidate(arg[1], c->tmpstr, strlen(c->tmpstr), h->pass, 16))
+						bool ipOk = false;
+#ifdef HAVE_IPV6
+						if(peer.ss_family == AF_INET6)
 						{
-							++c->tmpint;
-							c->handle = h;
-							free(c->tmpstr);
-							c->tmpstr = NULL;
-							return;
+							char peerip6[40] = "";
+							inet_ntop(AF_INET6, &((struct sockaddr_in6 *) &peer)->sin6_addr, peerip6, sizeof(peerip6));
+							ipOk = (!*h->ip6 || !strcmp(peerip6, h->ip6));
+						}
+						else
+#endif
+						{
+							unsigned int pip4 = ((struct sockaddr_in *) &peer)->sin_addr.s_addr;
+							ipOk = (!h->ip || pip4 == h->ip);
+						}
+						if(ipOk)
+						{
+							if(MD5HexValidate(arg[1], c->tmpstr, strlen(c->tmpstr), h->pass, 16))
+							{
+								++c->tmpint;
+								c->handle = h;
+								free(c->tmpstr);
+								c->tmpstr = NULL;
+								return;
+							}
+							else
+							{
+								reason = push(NULL, arg[0], ": wrong botpass", NULL);
+								break;
+							}
 						}
 						else
 						{
-							reason = push(NULL, arg[0], ": wrong botpass", NULL);
+							reason = push(NULL, arg[0], ": invalid botip", NULL);
 							break;
 						}
-					}
-					else
-					{
-						reason = push(NULL, arg[0], ": invalid botip", NULL);
-						break;
 					}
 				}
 				reason = push(NULL, "This should not happen (1)", NULL);

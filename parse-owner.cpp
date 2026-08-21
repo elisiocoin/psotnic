@@ -769,7 +769,7 @@ void parse_owner(inetconn *c, char *data)
 			h = h->next;
 		}
 		if(i >= set.MAX_MATCHES && set.MAX_MATCHES)
-        	c->send("(more than ", itoa(set.MAX_MATCHES), " matches, list truncated)", NULL);
+        	c->send("(moreï¿½thanï¿½", itoa(set.MAX_MATCHES), "ï¿½matches,ï¿½listï¿½truncated)", NULL);
 
 		if(!i) c->send("No matches has been found", NULL);
 		else c->send("--- Found ", itoa(i), " match", i == 1 ? "" : "es", " for '", arg[1], "'", NULL);
@@ -960,22 +960,26 @@ void parse_owner(inetconn *c, char *data)
 			c->send("Too long handle name", NULL);
 			return;
 		}
-		if((!isValidIp(arg[2]) || !match("*.*.*.*", arg[2])) && strcmp(arg[2], "-"))
 		{
-			c->send("Invalid IPv4 address", NULL);
+			bool isv6 = (isValidIp(arg[2]) == 6);
+			if(!isv6 && (!isValidIp(arg[2]) || !match("*.*.*.*", arg[2])) && strcmp(arg[2], "-"))
+			{
+				c->send("Invalid IP address (use IPv4, IPv6 or - for any)", NULL);
+				return;
+			}
+			if((h = userlist.addHandle(arg[1], (!strcmp(arg[2], "-") || isv6) ? 0 : inet_addr(arg[2]), B_FLAGS, 0, 0, c->name)))
+			{
+				if(isv6) strncpy(h->ip6, arg[2], 39);
+				net.sendCmd(c, "+bot ", arg[1], " ", arg[2], NULL);
+				c->send("Adding new bot `\002", arg[1], "\002'", NULL);
+				net.send(HAS_B, S_ADDBOT, " ", arg[1], " ", h->creation->print(), " ", arg[2], NULL);
+				//ME.recheckFlags();
+				++userlist.SN;
+				userlist.nextSave = NOW + SAVEDELAY;
+			}
+			else c->send("Handle exits", NULL);
 			return;
 		}
-		if((h = userlist.addHandle(arg[1], !strcmp(arg[2], "-") ? 0 : inet_addr(arg[2]), B_FLAGS, 0, 0, c->name)))
-		{
-			net.sendCmd(c, "+bot ", arg[1], " ", arg[2], NULL);
-			c->send("Adding new bot `\002", arg[1], "\002'", NULL);
-			net.send(HAS_B, S_ADDBOT, " ", arg[1], " ", h->creation->print(), " ", arg[2], NULL);
-			//ME.recheckFlags();
-			++userlist.SN;
-			userlist.nextSave = NOW + SAVEDELAY;
-		}
-		else c->send("Handle exits", NULL);
-		return;
 	}
 	if(!strcmp(arg[0], ".-bot") && strlen(arg[1]))
 	{

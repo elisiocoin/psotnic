@@ -316,17 +316,25 @@ HANDLE *ul::changeIp(char *user, char *ip)
 
 	if(h && isBot(h))
 	{
+		if(isValidIp(ip) == 6)
+		{
+			h->ip = 0;
+			strncpy(h->ip6, ip, 39);
+			h->ip6[39] = '\0';
+			return h;
+		}
 		unsigned int addr = inet_addr(ip);
 		if(!strcmp(inet2char(addr), ip))
 		{
 			h->ip = addr;
+			h->ip6[0] = '\0';
 			return h;
 		}
 	}
 	return NULL;
 }
 
-/* by Pawe³ (Googie) Salawa, boogie@myslenice.one.pl */
+/* by Paweï¿½ (Googie) Salawa, boogie@myslenice.one.pl */
 void ul::sendBotTree(inetconn *c)
 {
 	int slaves = 0;
@@ -465,7 +473,17 @@ int ul::parse(char *data)
 		}
 
 		if(!strcmp(arg[0], S_ADDUSER) || !strcmp(arg[0], "ADDUSER")) userlist.addHandle(arg[1], 0, 0, arg[2], arg[3], arg[4]);
-		else userlist.addHandle(arg[1], inet_addr(arg[4]), B_FLAGS, arg[2], arg[3], arg[5]);
+		else
+		{
+			HANDLE *bh;
+			if(isValidIp(arg[4]) == 6)
+			{
+				bh = userlist.addHandle(arg[1], 0, B_FLAGS, arg[2], arg[3], arg[5]);
+				if(bh) strncpy(bh->ip6, arg[4], 39);
+			}
+			else
+				bh = userlist.addHandle(arg[1], inet_addr(arg[4]), B_FLAGS, arg[2], arg[3], arg[5]);
+		}
 		h = userlist.findHandle(arg[1]);
 		if(h)
 		{
@@ -1462,6 +1480,18 @@ bool ul::isBot(unsigned int ip)
 	return false;
 }
 
+bool ul::isBot(const char *ip6str)
+{
+	if(!ip6str || !*ip6str) return false;
+	HANDLE *h = first;
+	while(h)
+	{
+		if(isBot(h) && !strcmp(h->ip6, ip6str)) return true;
+		h = h->next;
+	}
+	return false;
+}
+
 int ul::getFlags(const char *mask, const chan *ch)
 {
 	HANDLE *p = first;
@@ -1531,7 +1561,7 @@ void ul::send(inetconn *c, HANDLE *h, int strip)
 		int i;
 		char buf[MAX_LEN];
 
-		if(isBot(h)) c->send(S_ADDBOT, " ", h->name, " ",  h->creation->print(), " ", strip ? "-" : inet2char(h->ip), " ", c->status & STATUS_FILE ? h->createdBy : NULL, NULL);
+		if(isBot(h)) c->send(S_ADDBOT, " ", h->name, " ", h->creation->print(), " ", strip ? "-" : (*h->ip6 ? h->ip6 : inet2char(h->ip)), " ", c->status & STATUS_FILE ? h->createdBy : NULL, NULL);
 		else c->send(S_ADDUSER, " ", h->name, " ", h->creation->print(), " ", c->status & STATUS_FILE ? h->createdBy : NULL, NULL);
 
 		if(h->flags[MAX_CHANNELS])

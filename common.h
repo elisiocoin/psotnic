@@ -82,6 +82,7 @@ struct HANDLE
 	unsigned char pass[16];
 	int flags[MAX_CHANNELS+1];
 	unsigned int ip;
+	char ip6[40];
 	unsigned long long int channels;
 	HANDLE *next;
 	HANDLE *prev;

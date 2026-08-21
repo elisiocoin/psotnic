@@ -534,7 +534,7 @@ void str2args(char *word, const char *str, int x, int y)
 		wystepujacy w tym slowie zostanie z ignorowany. podobnie dla znaku
 		END_CHAR_ARG. jezeli znak za nim nie istnieje, lub nie jest to spacja to
 		znaki END_CHAR_ARG w srodku sa ignorowane. 
-		przyk³ady:
+		przykï¿½ady:
 		str2args('cos "1 2"') = 'cos', '1 2'
 	        str2args('cos 1" 2"') = 'cos', '1"', '2"'
 		str2args('cos c"o"s" dupa') = 'cos', 'c"o"s"', 'dupa'
@@ -851,14 +851,27 @@ const char *inet6char(in6_addr *addr)
 int acceptConnection(int fd, bool ssl)
 {
 	int n, silent;
-	struct sockaddr_in from;
-	socklen_t fromsize = sizeof(struct sockaddr_in);
+	struct sockaddr_storage from;
+	socklen_t fromsize = sizeof(from);
 	const int one = 1;
 	inetconn *c;
-    
+	unsigned int from_ip4 = 0;  /* network byte order, matches h->ip */
+#ifdef HAVE_IPV6
+	char from_ip6[40] = "";
+#endif
+
+	memset(&from, 0, sizeof(from));
+
 	if((n = accept(fd, (sockaddr *) &from, &fromsize)) > 0)
 	{
-		ign::entry *e = p_ignore.hit(ntohl(from.sin_addr.s_addr));
+		if(from.ss_family == AF_INET)
+			from_ip4 = ((struct sockaddr_in *) &from)->sin_addr.s_addr;
+#ifdef HAVE_IPV6
+		else if(from.ss_family == AF_INET6)
+			inet_ntop(AF_INET6, &((struct sockaddr_in6 *) &from)->sin6_addr, from_ip6, sizeof(from_ip6));
+#endif
+
+		ign::entry *e = p_ignore.hit(ntohl(from_ip4));  /* 0 for IPv6 = no ignore entry */
 
 		if(e->nextConn >= NOW || p_ignore.nextConn >= NOW)
 		{
@@ -870,7 +883,15 @@ int acceptConnection(int fd, bool ssl)
 
 		if(userlist.isSlave(userlist.first->next) || userlist.isMain(userlist.first->next) || config.bottype == BOT_MAIN)
 		{
-        	if(userlist.isBot(from.sin_addr.s_addr) || set.TELNET_OWNERS)
+			bool isKnownBot = (bool) set.TELNET_OWNERS;
+			if(!isKnownBot)
+			{
+				if(from_ip4) isKnownBot = userlist.isBot(from_ip4);
+#ifdef HAVE_IPV6
+				else if(*from_ip6) isKnownBot = userlist.isBot(from_ip6);
+#endif
+			}
+        	if(isKnownBot)
 			{
 				fcntl(n, F_SETFL, O_NONBLOCK);
 				setsockopt(n, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one));
