@@ -199,6 +199,7 @@ class entMD5Hash : public entWord
 	unsigned char hash[16];
 
 	public:
+	using entString::operator const char*;
 	entMD5Hash(const char *n="") : entWord(n)	{ memset(hash, 0, 16); };
 	virtual options::event *setValue(const char *arg1, const char *arg2, const bool justTest=0);
 	virtual void reset();
@@ -240,6 +241,7 @@ class entHub : public entHPPH
 	private:
 
 	public:
+	using entHPPH::operator=;
 	int failures;
 	entHub(const char *n="", entHost *host=0, entInt *port=0, entMD5Hash *pass=0, entWord *handle=0) :
 		entHPPH(n, host, port, pass, handle), failures(0) { };
@@ -250,6 +252,8 @@ class entHub : public entHPPH
 class entServer : public entHPPH
 {
 	public:
+	using entHPPH::operator=;
+	using ent::set;
 	entServer(const char *n="", entHost *ip=0, entInt *port=0, entWord *pass=0) :
 		entHPPH(n, ip, port, pass, 0) { };
 	virtual options::event *set(const char *ip, const char *port, const char *pass="", const bool justTest=0);
